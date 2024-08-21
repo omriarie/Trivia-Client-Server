@@ -1,6 +1,6 @@
 # Interactive Trivia Game Server
 
-![Trivia Game Logo](/public/trivia-game-logo.png "Logo of the Trivia Game")
+![Trivia Game Logo](trivia-game-logo.png "Logo of the Trivia Game")
 
 This project hosts an interactive trivia game server and client system designed to provide a fun and competitive quiz environment over a network. Users can connect via a client interface, participate in timed trivia rounds, and compete to answer questions correctly.
 
