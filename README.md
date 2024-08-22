@@ -33,7 +33,7 @@ Ensure you have Python installed on your system. This project was developed usin
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/trivia-game.git
+git clone https://github.com/omriarie/Trivia-Client-Server.git
 ```
 # Navigate to the project directory
 cd trivia-game
