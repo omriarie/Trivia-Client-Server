@@ -38,7 +38,7 @@ git clone https://github.com/yourusername/trivia-game.git
 # Navigate to the project directory
 cd trivia-game
 
-# No additional dependencies are required, just Python 3.
+No additional dependencies are required, just Python 3.
 
 ## Running the Application
 
