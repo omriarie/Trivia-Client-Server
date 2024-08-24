@@ -112,3 +112,75 @@ class GameStatistics:
         least_common_character = self.typed_characters.most_common()[-1][0]
         stat_mes += f"\nLeast commonly typed character: {least_common_character}\n"
         return stat_mes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# import socket
+# import asyncio
+#
+# # Define the main server class or functions here...
+# class TriviaGameServer:
+#     def _init_(self, udp_port, tcp_port):
+#         self.udp_port = udp_port
+#         self.tcp_port = tcp_port
+#         self.server_ip = socket.gethostbyname(socket.gethostname())
+#         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+#         # Enable broadcasting mode
+#         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+#
+#     async def broadcast_udp(self):
+#         while True:
+#             message = f"Trivia Game Server offering on {self.server_ip}:{self.tcp_port}"
+#             # Broadcasting the message
+#             self.udp_socket.sendto(message.encode(), ('<broadcast>', self.udp_port))
+#             print(f"Broadcasted: {message}")
+#             await asyncio.sleep(1)
+#
+#     async def run_server(self):
+#         await self.broadcast_udp()  # For now, just run the broadcast to test
+#
+#
+# # Server configuration
+# udp_port = 37020
+# tcp_port = 37021
+# server = TriviaGameServer(udp_port, tcp_port)
+#
+# # Start the server's broadcasting task
+# asyncio.run(server.run_server())
+#
+# import socket
+#
+#
+# def listen_for_broadcasts(port):
+#     # Create a UDP socket
+#     listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#
+#     # Enable port reusability and bind to the broadcast port
+#     listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+#     listener.bind(('', port))
+#
+#     print(f"Listening for broadcasts on port {port}...")
+#
+#     while True:
+#         message, address = listener.recvfrom(1024)
+#         print(f"Received broadcast from {address}: {message.decode()}")
+#
+#
+# # The UDP port should match the one used by the server for broadcasting
+# listen_for_broadcasts(37020)
+#

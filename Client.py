@@ -4,7 +4,7 @@ import socket
 from scapy.layers.inet import UDP, IP
 import sys
 import colorama
-from inputimeout import inputimeout
+from inputimeout import inputimeout, TimeoutOccurred
 
 colorama.init()
 # Constants
@@ -60,10 +60,18 @@ def connect_and_play(server_ip, tcp_port):
         player_name = None
         # Get player name with timeout
         try:
-            player_name = inputimeout(prompt="Enter your player name: ", timeout=time_left) + "\n"
-        except:
-            print_magenta("timeout, game over")
-            return
+            print_red("Enter your player name: ")
+            player_name = inputimeout(timeout=time_left)
+        except TimeoutOccurred:
+            print("Timeout, game over")
+            tcp_socket.shutdown(socket.SHUT_RDWR)
+            tcp_socket.close()
+            return None
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            tcp_socket.shutdown(socket.SHUT_RDWR)
+            tcp_socket.close()
+            return None
 
         if player_name is None:
             tcp_socket.shutdown(SHUT_RDWR)
@@ -119,40 +127,76 @@ def connect_and_play(server_ip, tcp_port):
                 print_red(message)
 
 
+# def listen_for_udp_offer_scapy():
+#     """
+#         Listen for UDP offer messages using Scapy.
+#
+#         Returns:
+#             sender_ip (str): IP address of the sender.
+#             tcp_port (int): TCP port number.
+#         """
+#
+#     tcp_port = None
+#     sender_ip = None
+#
+#     def udp_filter(packet):
+#         """Filter UDP packets to find offer messages."""
+#
+#         nonlocal tcp_port, sender_ip
+#         if packet.haslayer(UDP) and packet[UDP].dport == UDP_PORT:
+#             data = packet[UDP].payload.load
+#             if len(data) >= 7:
+#                 magic_cookie = int.from_bytes(data[:4], 'big')
+#                 message_type = data[4]
+#                 if magic_cookie == MAGIC_COOKIE and message_type == OFFER_MESSAGE_TYPE:
+#                     tcp_port = int.from_bytes(data[37:39], 'big')
+#                     sender_ip = packet[IP].src  # Extracting the IP address of the sender
+#                     print_red(f"Offer received from {sender_ip} on port {tcp_port}")
+#                     return True  # Indicate that the correct packet was found
+#
+#     def stop_sniffing(packet):
+#         """Stop sniffing when TCP port is set."""
+#         return tcp_port is not None  # Stop sniffing if tcp_port is set
+#
+#     print_red(f"Listening for offers on UDP port {UDP_PORT}...")
+#     sniff(filter=f"udp and dst port {UDP_PORT}", prn=udp_filter, stop_filter=stop_sniffing, store=0)
+#     delete_last_printed_row()  # Clear the last printed row
+#     return sender_ip, tcp_port
+
 def listen_for_udp_offer_scapy():
     """
-        Listen for UDP offer messages using Scapy.
+        Listen for UDP offer messages using the socket module instead of Scapy.
 
         Returns:
             sender_ip (str): IP address of the sender.
             tcp_port (int): TCP port number.
         """
 
+    listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    # Enable port reusability and bind to the broadcast port
+    listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    listener.bind(('', UDP_PORT))
+
+    print_red(f"Listening for offers on UDP port {UDP_PORT}...")
+
     tcp_port = None
     sender_ip = None
 
-    def udp_filter(packet):
-        """Filter UDP packets to find offer messages."""
+    while True:
+        message, address = listener.recvfrom(1024)
+        print_red(f"Received broadcast from {address}:")
 
-        nonlocal tcp_port, sender_ip
-        if packet.haslayer(UDP) and packet[UDP].dport == UDP_PORT:
-            data = packet[UDP].payload.load
-            if len(data) >= 7:
-                magic_cookie = int.from_bytes(data[:4], 'big')
-                message_type = data[4]
-                if magic_cookie == MAGIC_COOKIE and message_type == OFFER_MESSAGE_TYPE:
-                    tcp_port = int.from_bytes(data[37:39], 'big')
-                    sender_ip = packet[IP].src  # Extracting the IP address of the sender
-                    print_red(f"Offer received from {sender_ip} on port {tcp_port}")
-                    return True  # Indicate that the correct packet was found
+        # Check if the message contains the expected magic cookie and message type
+        if len(message) >= 7:
+            magic_cookie = int.from_bytes(message[:4], 'big')
+            message_type = message[4]
+            if magic_cookie == MAGIC_COOKIE and message_type == OFFER_MESSAGE_TYPE:
+                tcp_port = int.from_bytes(message[37:39], 'big')  # Adjusted slicing to match Scapy version
+                sender_ip = address[0]  # Extracting the IP address of the sender
+                print_red(f"Offer received from {sender_ip} on port {tcp_port}")
+                break  # Exit loop once the correct packet is found
 
-    def stop_sniffing(packet):
-        """Stop sniffing when TCP port is set."""
-        return tcp_port is not None  # Stop sniffing if tcp_port is set
-
-    print_red(f"Listening for offers on UDP port {UDP_PORT}...")
-    sniff(filter=f"udp and dst port {UDP_PORT}", prn=udp_filter, stop_filter=stop_sniffing, store=0)
-    delete_last_printed_row()  # Clear the last printed row
     return sender_ip, tcp_port
 
 
@@ -167,3 +211,9 @@ if __name__ == "__main__":
             print_red("No offer received.")
 
 # python Client.py
+
+
+
+
+
+

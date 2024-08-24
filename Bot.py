@@ -26,32 +26,32 @@ def listen_for_udp_offer_scapy():
             tcp_port (int): TCP port number.
         """
 
-    tcp_port = None
-    server_ip = None
+    listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    def udp_filter(packet):
-        """Filter UDP packets to find offer messages."""
-
-        nonlocal tcp_port, server_ip
-        if packet.haslayer(UDP) and packet[UDP].dport == UDP_PORT:
-            data = packet[UDP].payload.load
-            if len(data) >= 7:
-                magic_cookie = int.from_bytes(data[:4], 'big')
-                message_type = data[4]
-                if magic_cookie == MAGIC_COOKIE and message_type == OFFER_MESSAGE_TYPE:
-                    tcp_port = int.from_bytes(data[37:39], 'big')  # Adjusted slicing
-                    server_ip = packet[IP].src  # Extracting the IP address of the sender
-                    print_blue(f"Offer received from {server_ip} on port {tcp_port}")
-                    return True  # Indicate that the correct packet was found
-
-    def stop_sniffing(packet):
-        """Stop sniffing when TCP port is set."""
-        return tcp_port is not None
+    # Enable port reusability and bind to the broadcast port
+    listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    listener.bind(('', UDP_PORT))
 
     print_blue(f"Listening for offers on UDP port {UDP_PORT}...")
-    sniff(filter=f"udp and dst port {UDP_PORT}", prn=udp_filter, stop_filter=stop_sniffing, store=0)
-    delete_last_printed_row()  # Clear the last printed row
-    return server_ip, tcp_port
+
+    tcp_port = None
+    sender_ip = None
+
+    while True:
+        message, address = listener.recvfrom(1024)
+        print_blue(f"Received broadcast from {address}:")
+
+        # Check if the message contains the expected magic cookie and message type
+        if len(message) >= 7:
+            magic_cookie = int.from_bytes(message[:4], 'big')
+            message_type = message[4]
+            if magic_cookie == MAGIC_COOKIE and message_type == OFFER_MESSAGE_TYPE:
+                tcp_port = int.from_bytes(message[37:39], 'big')  # Adjusted slicing to match Scapy version
+                sender_ip = address[0]  # Extracting the IP address of the sender
+                print_blue(f"Offer received from {sender_ip} on port {tcp_port}")
+                break  # Exit loop once the correct packet is found
+
+    return sender_ip, tcp_port
 
 
 def connect_and_play(server_ip, tcp_port):
