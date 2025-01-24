@@ -124,7 +124,7 @@ def start_trivia_round():
 
         threads = []
         counter += 1
-        end_time = time.time() + 10
+        end_time = time.time() + 20
 
         for player in in_game_players:
             player_thread_instance = threading.Thread(target=player_thread, args=(
